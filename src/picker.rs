@@ -11,13 +11,9 @@ impl<'a> Picker<'a> {
             state: State::new(),
         }
     }
-
-    pub fn set_next_line_member<'b: 'a>(&mut self, next_in_line: &'b mut dyn LineMember) {
-        self.state.set_next_line_member(next_in_line);
-    }
 }
 
-impl<'a> LineMember for Picker<'a> {
+impl<'a> LineMember<'a> for Picker<'a> {
     fn process_pick_ticket(
         &mut self,
         receive_at: SimulationTime,
@@ -29,5 +25,9 @@ impl<'a> LineMember for Picker<'a> {
         return self
             .state
             .process_pick_ticket(receive_at, pick_ticket, contents, 1.0);
+    }
+
+    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
+        self.state.set_next_line_member(next_in_line);
     }
 }

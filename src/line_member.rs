@@ -1,19 +1,21 @@
 use crate::{ItemPicks, SimulationTime};
 
-pub trait LineMember {
+pub trait LineMember<'a> {
     fn process_pick_ticket(
         &mut self,
         receive_at: SimulationTime,
         pick_ticket: &ItemPicks,
         contents: &mut ItemPicks,
     ) -> SimulationTime;
+
+    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>);
 }
 
 pub struct State<'a> {
     now: SimulationTime,
     blocked_until: SimulationTime,
     idle_duration: SimulationTime,
-    next_in_line: Option<&'a mut dyn LineMember>,
+    next_in_line: Option<&'a mut dyn LineMember<'a>>,
 }
 
 impl<'a> State<'a> {
@@ -40,7 +42,7 @@ impl<'a> State<'a> {
         return self.now;
     }
 
-    pub fn set_next_line_member<'b: 'a>(&mut self, next_in_line: &'b mut dyn LineMember) {
+    pub fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
         self.next_in_line = Some(next_in_line);
         self.blocked_until = 0.0;
     }
