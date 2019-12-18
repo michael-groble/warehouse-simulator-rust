@@ -28,6 +28,22 @@ impl<'a> State<'a> {
         }
     }
 
+    /// Performs the expected state update given how much work time is required and what the updated contents
+    /// are to pass down the line.
+    ///
+    /// Returns the current value of [`State::elapsed_time`]
+    ///
+    /// # Examples
+    /// ```
+    /// # use warehouse_simulator::*;
+    /// # use warehouse_simulator::line_member::State;
+    /// let mut state = State::new();
+    ///
+    /// let duration = state.process_pick_ticket(1.0, &ItemPicks::new(), &mut ItemPicks::new(), 1.0);
+    /// assert_eq!(duration, 2.0);
+    /// assert_eq!(state.elapsed_time(), 2.0);
+    /// assert_eq!(state.idle_time(), 1.0);
+    /// ```
     pub fn process_pick_ticket(
         &mut self,
         receive_at: SimulationTime,
@@ -45,6 +61,19 @@ impl<'a> State<'a> {
     pub fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
         self.next_in_line = Some(next_in_line);
         self.blocked_until = 0.0;
+    }
+
+    /// Total time elapsed until the member can accept another work item
+    ///
+    /// Note they may currently be blocked until after this time, but that won't show up
+    /// until a new pick ticket is processed.
+    pub fn elapsed_time(&self) -> SimulationTime {
+        return self.now;
+    }
+
+    /// Time spent idle (blocked or waiting)
+    pub fn idle_time(&self) -> SimulationTime {
+        return self.idle_duration;
     }
 
     fn pass_down_line(&mut self, pick_ticket: &ItemPicks, contents: &mut ItemPicks) {
