@@ -1,11 +1,11 @@
 use crate::{ItemPicks, SimulationTime};
 
 pub trait LineMember<'a> {
-    fn process_pick_ticket(
+    fn process_pick_ticket<'b>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks,
-        contents: &mut ItemPicks,
+        pick_ticket: &ItemPicks<'b>,
+        contents: &mut ItemPicks<'b>,
     ) -> SimulationTime;
 
     fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>);
@@ -44,11 +44,11 @@ impl<'a> State<'a> {
     /// assert_eq!(state.elapsed_time(), 2.0);
     /// assert_eq!(state.idle_time(), 1.0);
     /// ```
-    pub fn process_pick_ticket(
+    pub fn process_pick_ticket<'b>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks,
-        updated_contents: &mut ItemPicks,
+        pick_ticket: &ItemPicks<'b>,
+        updated_contents: &mut ItemPicks<'b>,
         work_duration: SimulationTime,
     ) -> SimulationTime {
         self.wait_idle_until(receive_at);
@@ -76,7 +76,7 @@ impl<'a> State<'a> {
         return self.idle_duration;
     }
 
-    fn pass_down_line(&mut self, pick_ticket: &ItemPicks, contents: &mut ItemPicks) {
+    fn pass_down_line<'b>(&mut self, pick_ticket: &ItemPicks<'b>, contents: &mut ItemPicks<'b>) {
         if let Some(next) = &mut self.next_in_line {
             self.blocked_until = next.process_pick_ticket(self.now, pick_ticket, contents);
         }
