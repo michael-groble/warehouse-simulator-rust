@@ -2,7 +2,7 @@ use crate::{ItemPicks, SimulationTime};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-pub trait LineMember {
+pub trait LineMember: Stateful {
     fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
@@ -10,7 +10,18 @@ pub trait LineMember {
         contents: &mut ItemPicks<'a>,
     ) -> SimulationTime;
 
-    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>);
+    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
+        self.state_mut().set_next_line_member(next_in_line);
+    }
+
+    fn elapsed_time(&self) -> SimulationTime {
+        self.state().now
+    }
+
+    /// Time spent idle (blocked or waiting)
+    fn idle_time(&self) -> SimulationTime {
+        self.state().idle_duration
+    }
 }
 
 pub struct State {
@@ -80,7 +91,9 @@ impl State {
 
     fn pass_down_line<'b>(&mut self, pick_ticket: &ItemPicks<'b>, contents: &mut ItemPicks<'b>) {
         if let Some(next) = &mut self.next_in_line {
-            self.blocked_until = next.borrow_mut().process_pick_ticket(self.now, pick_ticket, contents);
+            self.blocked_until =
+                next.borrow_mut()
+                    .process_pick_ticket(self.now, pick_ticket, contents);
         }
     }
 
@@ -99,4 +112,9 @@ impl State {
     fn work_for_duration(&mut self, duration: SimulationTime) {
         self.now += duration;
     }
+}
+
+pub trait Stateful {
+    fn state(&self) -> &State;
+    fn state_mut(&mut self) -> &mut State;
 }

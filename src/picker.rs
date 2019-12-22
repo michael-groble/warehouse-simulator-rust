@@ -1,9 +1,7 @@
 extern crate serde;
-use crate::line_member::State;
+use crate::line_member::{State, Stateful};
 use crate::*;
 use std::collections::HashSet;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[derive(Default, serde::Deserialize)]
 pub struct Parameters {
@@ -54,6 +52,15 @@ impl Picker {
     }
 }
 
+impl Stateful for Picker {
+    fn state(&self) -> &State {
+        &self.state
+    }
+    fn state_mut(&mut self) -> &mut State {
+        &mut self.state
+    }
+}
+
 impl LineMember for Picker {
     /// Processes the pick ticket based on configured parameters
     ///
@@ -84,9 +91,5 @@ impl LineMember for Picker {
         let duration = self.pick_duration_and_update_contents(pick_ticket, contents);
         self.state
             .process_pick_ticket(receive_at, pick_ticket, contents, duration)
-    }
-
-    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
-        self.state.set_next_line_member(next_in_line);
     }
 }

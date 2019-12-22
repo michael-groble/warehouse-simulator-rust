@@ -1,11 +1,9 @@
 extern crate rand;
 extern crate serde;
 
-use crate::line_member::State;
+use crate::line_member::{State, Stateful};
 use crate::*;
 use rand::Rng;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -60,6 +58,15 @@ impl Checker {
     }
 }
 
+impl Stateful for Checker {
+    fn state(&self) -> &State {
+        &self.state
+    }
+    fn state_mut(&mut self) -> &mut State {
+        &mut self.state
+    }
+}
+
 impl LineMember for Checker {
     /// Processes the pick ticket based on configured parameters
     ///
@@ -87,9 +94,5 @@ impl LineMember for Checker {
         let duration = self.check_duration(pick_ticket, contents);
         self.state
             .process_pick_ticket(receive_at, pick_ticket, contents, duration)
-    }
-
-    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
-        self.state.set_next_line_member(next_in_line);
     }
 }
