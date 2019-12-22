@@ -9,6 +9,9 @@ pub use self::picker::Picker;
 pub mod checker;
 pub use self::checker::Checker;
 
+pub mod line;
+pub use self::line::Line;
+
 pub type SimulationTime = f64;
 pub type PickQuantity = i32;
 pub type ItemPicks<'a> = HashMap<&'a str, PickQuantity>;

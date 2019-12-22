@@ -1,32 +1,37 @@
-use crate::line_member::State;
+extern crate serde;
+use crate::line_member::{State, Stateful};
 use crate::*;
 use std::collections::HashSet;
 
-#[derive(Default)]
-pub struct Parameters<'a> {
-    pub pickable_items: HashSet<&'a str>,
+#[derive(Default, serde::Deserialize)]
+pub struct Parameters {
+    #[serde(default)]
+    pub pickable_items: HashSet<String>,
+    #[serde(default)]
     pub seconds_per_pick_ticket: SimulationTime,
+    #[serde(default)]
     pub seconds_per_item: SimulationTime,
+    #[serde(default)]
     pub seconds_per_quantity: SimulationTime,
 }
 
-pub struct Picker<'a> {
-    state: State<'a>,
-    parameters: Parameters<'a>,
+pub struct Picker {
+    state: State,
+    parameters: Parameters,
 }
 
-impl<'a> Picker<'a> {
-    pub fn new(parameters: Parameters<'a>) -> Picker<'a> {
-        Picker {
+impl Picker {
+    pub fn new(parameters: Parameters) -> Self {
+        Self {
             state: State::new(),
-            parameters
+            parameters,
         }
     }
 
-    fn pick_duration_and_update_contents<'b>(
+    fn pick_duration_and_update_contents<'a>(
         &self,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime {
         let picks: ItemPicks = pick_ticket
             .iter()
@@ -43,12 +48,20 @@ impl<'a> Picker<'a> {
             contents.insert(k, v);
         }
 
-        return duration;
+        duration
     }
 }
 
-impl<'a> LineMember<'a> for Picker<'a> {
+impl Stateful for Picker {
+    fn state(&self) -> &State {
+        &self.state
+    }
+    fn state_mut(&mut self) -> &mut State {
+        &mut self.state
+    }
+}
 
+impl LineMember for Picker {
     /// Processes the pick ticket based on configured parameters
     ///
     /// # Examples
@@ -56,7 +69,7 @@ impl<'a> LineMember<'a> for Picker<'a> {
     /// # use warehouse_simulator::*;
     ///
     /// let mut p1 = Picker::new(picker::Parameters {
-    ///    pickable_items: vec!["A"].into_iter().collect(),
+    ///    pickable_items: vec!["A".to_string()].into_iter().collect(),
     ///    seconds_per_item: 1.0,
     ///    ..Default::default()
     ///  });
@@ -69,19 +82,14 @@ impl<'a> LineMember<'a> for Picker<'a> {
     /// assert_eq!(contents["A"], 1);
     /// assert_eq!(contents.contains_key("B"), false);
     /// ```
-    fn process_pick_ticket<'b>(
+    fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime {
         let duration = self.pick_duration_and_update_contents(pick_ticket, contents);
-        return self
-            .state
-            .process_pick_ticket(receive_at, pick_ticket, contents, duration);
-    }
-
-    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
-        self.state.set_next_line_member(next_in_line);
+        self.state
+            .process_pick_ticket(receive_at, pick_ticket, contents, duration)
     }
 }
