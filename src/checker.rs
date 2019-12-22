@@ -4,6 +4,8 @@ extern crate serde;
 use crate::line_member::State;
 use crate::*;
 use rand::Rng;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -28,12 +30,12 @@ impl Default for Parameters {
     }
 }
 
-pub struct Checker<'a> {
-    state: State<'a>,
+pub struct Checker {
+    state: State,
     parameters: Parameters,
 }
 
-impl<'a> Checker<'a> {
+impl Checker {
     pub fn new(parameters: Parameters) -> Self {
         Self {
             state: State::new(),
@@ -58,7 +60,7 @@ impl<'a> Checker<'a> {
     }
 }
 
-impl<'a> LineMember<'a> for Checker<'a> {
+impl LineMember for Checker {
     /// Processes the pick ticket based on configured parameters
     ///
     /// # Examples
@@ -76,18 +78,18 @@ impl<'a> LineMember<'a> for Checker<'a> {
     /// let duration = p1.process_pick_ticket(0.0, &pick_ticket, &mut contents);
     /// assert_eq!(duration, 2.0);
     /// ```
-    fn process_pick_ticket<'b>(
+    fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime {
         let duration = self.check_duration(pick_ticket, contents);
         self.state
             .process_pick_ticket(receive_at, pick_ticket, contents, duration)
     }
 
-    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
+    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
         self.state.set_next_line_member(next_in_line);
     }
 }

@@ -2,6 +2,8 @@ extern crate serde;
 use crate::line_member::State;
 use crate::*;
 use std::collections::HashSet;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Default, serde::Deserialize)]
 pub struct Parameters {
@@ -15,12 +17,12 @@ pub struct Parameters {
     pub seconds_per_quantity: SimulationTime,
 }
 
-pub struct Picker<'a> {
-    state: State<'a>,
+pub struct Picker {
+    state: State,
     parameters: Parameters,
 }
 
-impl<'a> Picker<'a> {
+impl Picker {
     pub fn new(parameters: Parameters) -> Self {
         Self {
             state: State::new(),
@@ -28,10 +30,10 @@ impl<'a> Picker<'a> {
         }
     }
 
-    fn pick_duration_and_update_contents<'b>(
+    fn pick_duration_and_update_contents<'a>(
         &self,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime {
         let picks: ItemPicks = pick_ticket
             .iter()
@@ -52,7 +54,7 @@ impl<'a> Picker<'a> {
     }
 }
 
-impl<'a> LineMember<'a> for Picker<'a> {
+impl LineMember for Picker {
     /// Processes the pick ticket based on configured parameters
     ///
     /// # Examples
@@ -73,18 +75,18 @@ impl<'a> LineMember<'a> for Picker<'a> {
     /// assert_eq!(contents["A"], 1);
     /// assert_eq!(contents.contains_key("B"), false);
     /// ```
-    fn process_pick_ticket<'b>(
+    fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime {
         let duration = self.pick_duration_and_update_contents(pick_ticket, contents);
         self.state
             .process_pick_ticket(receive_at, pick_ticket, contents, duration)
     }
 
-    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
+    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
         self.state.set_next_line_member(next_in_line);
     }
 }

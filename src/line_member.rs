@@ -1,25 +1,27 @@
 use crate::{ItemPicks, SimulationTime};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-pub trait LineMember<'a> {
-    fn process_pick_ticket<'b>(
+pub trait LineMember {
+    fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks<'b>,
-        contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        contents: &mut ItemPicks<'a>,
     ) -> SimulationTime;
 
-    fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>);
+    fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>);
 }
 
-pub struct State<'a> {
+pub struct State {
     now: SimulationTime,
     blocked_until: SimulationTime,
     idle_duration: SimulationTime,
-    next_in_line: Option<&'a mut dyn LineMember<'a>>,
+    next_in_line: Option<Rc<RefCell<dyn LineMember>>>,
 }
 
-impl<'a> State<'a> {
-    pub fn new() -> State<'a> {
+impl State {
+    pub fn new() -> State {
         State {
             now: 0.0,
             blocked_until: 0.0,
@@ -44,11 +46,11 @@ impl<'a> State<'a> {
     /// assert_eq!(state.elapsed_time(), 2.0);
     /// assert_eq!(state.idle_time(), 1.0);
     /// ```
-    pub fn process_pick_ticket<'b>(
+    pub fn process_pick_ticket<'a>(
         &mut self,
         receive_at: SimulationTime,
-        pick_ticket: &ItemPicks<'b>,
-        updated_contents: &mut ItemPicks<'b>,
+        pick_ticket: &ItemPicks<'a>,
+        updated_contents: &mut ItemPicks<'a>,
         work_duration: SimulationTime,
     ) -> SimulationTime {
         self.wait_idle_until(receive_at);
@@ -58,8 +60,8 @@ impl<'a> State<'a> {
         self.now
     }
 
-    pub fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
-        self.next_in_line = Some(next_in_line);
+    pub fn set_next_line_member(&mut self, next_in_line: &Rc<RefCell<dyn LineMember>>) {
+        self.next_in_line = Some(next_in_line.clone());
         self.blocked_until = 0.0;
     }
 
@@ -78,7 +80,7 @@ impl<'a> State<'a> {
 
     fn pass_down_line<'b>(&mut self, pick_ticket: &ItemPicks<'b>, contents: &mut ItemPicks<'b>) {
         if let Some(next) = &mut self.next_in_line {
-            self.blocked_until = next.process_pick_ticket(self.now, pick_ticket, contents);
+            self.blocked_until = next.borrow_mut().process_pick_ticket(self.now, pick_ticket, contents);
         }
     }
 

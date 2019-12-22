@@ -6,9 +6,11 @@ use serde_json::Value;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, ErrorKind};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-pub struct Line<'a> {
-    members: Vec<&'a dyn LineMember<'a>>,
+pub struct Line {
+    members: Vec<Rc<RefCell<dyn LineMember>>>,
 }
 
 pub enum Parameter {
@@ -20,7 +22,7 @@ pub struct Parameters {
     pub members: Vec<Parameter>,
 }
 
-impl<'a> Line<'a> {
+impl Line {
     ///
     /// # Examples
     /// ```
@@ -91,5 +93,29 @@ impl<'a> Line<'a> {
             }
         }
         Ok(line_parameters)
+    }
+
+    pub fn new(parameters: Parameters) -> Self {
+        let mut members : Vec<Rc<RefCell<dyn LineMember>>> = Vec::with_capacity(parameters.members.len());
+
+        for member_parameters in parameters.members.into_iter() {
+            match member_parameters {
+                Parameter::Checker(parameters) => {
+                    let member = checker::Checker::new(parameters);
+                    members.push(Rc::new(RefCell::new(member)));
+                },
+                Parameter::Picker(parameters) => {
+                    let member : picker::Picker = picker::Picker::new(parameters);
+                    members.push(Rc::new(RefCell::new(member)));
+                }
+            };
+        };
+
+        for i in 1..members.len() {
+            let previous = &members[i-1];
+            let current = &members[i];
+            previous.borrow_mut().set_next_line_member(current);
+        }
+        Self { members }
     }
 }
