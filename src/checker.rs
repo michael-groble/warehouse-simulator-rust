@@ -1,23 +1,29 @@
 extern crate rand;
+extern crate serde;
 
 use crate::line_member::State;
 use crate::*;
 use rand::Rng;
 
+#[derive(serde::Deserialize)]
 pub struct Parameters {
+    #[serde(default)]
     pub check_probability: f32,
+    #[serde(default)]
     pub seconds_per_pick_ticket: SimulationTime,
+    #[serde(default)]
     pub seconds_per_item: SimulationTime,
+    #[serde(default)]
     pub seconds_per_quantity: SimulationTime,
 }
 
 impl Default for Parameters {
-    fn default() -> Self  {
+    fn default() -> Self {
         Self {
             check_probability: 1.0,
             seconds_per_pick_ticket: 0.0,
             seconds_per_item: 0.0,
-            seconds_per_quantity: 0.0
+            seconds_per_quantity: 0.0,
         }
     }
 }
@@ -28,38 +34,31 @@ pub struct Checker<'a> {
 }
 
 impl<'a> Checker<'a> {
-    pub fn new(parameters: Parameters) -> Checker<'a> {
-        Checker {
+    pub fn new(parameters: Parameters) -> Self {
+        Self {
             state: State::new(),
-            parameters
+            parameters,
         }
     }
 
-    fn check_duration(
-        &self,
-        _pick_ticket: &ItemPicks,
-        contents: &ItemPicks,
-    ) -> SimulationTime {
-        let p : f32 = rand::thread_rng().gen();
+    fn check_duration(&self, _pick_ticket: &ItemPicks, contents: &ItemPicks) -> SimulationTime {
+        let p: f32 = rand::thread_rng().gen();
         println!("{}", p);
-        if  p > self.parameters.check_probability {
-            return 0.0
-        }
-        else {
+        if p > self.parameters.check_probability {
+            0.0
+        } else {
             let item_count = contents.len();
             println!("{}", item_count);
             let pick_count: PickQuantity = contents.iter().map(|(_k, &v)| v).sum();
-            let duration = self.parameters.seconds_per_pick_ticket
-                + item_count as SimulationTime * self.parameters.seconds_per_item
-                + pick_count as SimulationTime * self.parameters.seconds_per_quantity;
 
-            return duration;
+            self.parameters.seconds_per_pick_ticket
+                + item_count as SimulationTime * self.parameters.seconds_per_item
+                + pick_count as SimulationTime * self.parameters.seconds_per_quantity
         }
     }
 }
 
 impl<'a> LineMember<'a> for Checker<'a> {
-
     /// Processes the pick ticket based on configured parameters
     ///
     /// # Examples
@@ -84,9 +83,8 @@ impl<'a> LineMember<'a> for Checker<'a> {
         contents: &mut ItemPicks<'b>,
     ) -> SimulationTime {
         let duration = self.check_duration(pick_ticket, contents);
-        return self
-            .state
-            .process_pick_ticket(receive_at, pick_ticket, contents, duration);
+        self.state
+            .process_pick_ticket(receive_at, pick_ticket, contents, duration)
     }
 
     fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {

@@ -1,0 +1,23 @@
+{
+  "members": [
+    {
+      "type": "Picker",
+      "parameters": {
+        "pickable_items": ["A", "B"]
+      }
+    },
+    {
+      "type": "Picker",
+      "parameters": {
+        "pickable_items": ["C", "D"]
+      }
+    },
+    {
+      "type": "Checker",
+      "parameters": {
+        "check_probability": 0.25,
+        "seconds_per_pick_ticket": 2.0
+      }
+    }
+  ]
+}

@@ -1,25 +1,30 @@
+extern crate serde;
 use crate::line_member::State;
 use crate::*;
 use std::collections::HashSet;
 
-#[derive(Default)]
-pub struct Parameters<'a> {
-    pub pickable_items: HashSet<&'a str>,
+#[derive(Default, serde::Deserialize)]
+pub struct Parameters {
+    #[serde(default)]
+    pub pickable_items: HashSet<String>,
+    #[serde(default)]
     pub seconds_per_pick_ticket: SimulationTime,
+    #[serde(default)]
     pub seconds_per_item: SimulationTime,
+    #[serde(default)]
     pub seconds_per_quantity: SimulationTime,
 }
 
 pub struct Picker<'a> {
     state: State<'a>,
-    parameters: Parameters<'a>,
+    parameters: Parameters,
 }
 
 impl<'a> Picker<'a> {
-    pub fn new(parameters: Parameters<'a>) -> Picker<'a> {
-        Picker {
+    pub fn new(parameters: Parameters) -> Self {
+        Self {
             state: State::new(),
-            parameters
+            parameters,
         }
     }
 
@@ -43,12 +48,11 @@ impl<'a> Picker<'a> {
             contents.insert(k, v);
         }
 
-        return duration;
+        duration
     }
 }
 
 impl<'a> LineMember<'a> for Picker<'a> {
-
     /// Processes the pick ticket based on configured parameters
     ///
     /// # Examples
@@ -56,7 +60,7 @@ impl<'a> LineMember<'a> for Picker<'a> {
     /// # use warehouse_simulator::*;
     ///
     /// let mut p1 = Picker::new(picker::Parameters {
-    ///    pickable_items: vec!["A"].into_iter().collect(),
+    ///    pickable_items: vec!["A".to_string()].into_iter().collect(),
     ///    seconds_per_item: 1.0,
     ///    ..Default::default()
     ///  });
@@ -76,9 +80,8 @@ impl<'a> LineMember<'a> for Picker<'a> {
         contents: &mut ItemPicks<'b>,
     ) -> SimulationTime {
         let duration = self.pick_duration_and_update_contents(pick_ticket, contents);
-        return self
-            .state
-            .process_pick_ticket(receive_at, pick_ticket, contents, duration);
+        self.state
+            .process_pick_ticket(receive_at, pick_ticket, contents, duration)
     }
 
     fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {

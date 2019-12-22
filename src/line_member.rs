@@ -55,7 +55,7 @@ impl<'a> State<'a> {
         self.work_for_duration(work_duration);
         self.wait_until_unblocked();
         self.pass_down_line(pick_ticket, updated_contents);
-        return self.now;
+        self.now
     }
 
     pub fn set_next_line_member(&mut self, next_in_line: &'a mut dyn LineMember<'a>) {
@@ -68,12 +68,12 @@ impl<'a> State<'a> {
     /// Note they may currently be blocked until after this time, but that won't show up
     /// until a new pick ticket is processed.
     pub fn elapsed_time(&self) -> SimulationTime {
-        return self.now;
+        self.now
     }
 
     /// Time spent idle (blocked or waiting)
     pub fn idle_time(&self) -> SimulationTime {
-        return self.idle_duration;
+        self.idle_duration
     }
 
     fn pass_down_line<'b>(&mut self, pick_ticket: &ItemPicks<'b>, contents: &mut ItemPicks<'b>) {
