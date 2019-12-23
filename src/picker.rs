@@ -3,7 +3,7 @@ use crate::line_member::{State, Stateful};
 use crate::*;
 use std::collections::HashSet;
 
-#[derive(Default, serde::Deserialize)]
+#[derive(Default, Debug, serde::Deserialize)]
 pub struct Parameters {
     #[serde(default)]
     pub pickable_items: HashSet<String>,

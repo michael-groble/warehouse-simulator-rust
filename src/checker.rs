@@ -5,7 +5,7 @@ use crate::line_member::{State, Stateful};
 use crate::*;
 use rand::Rng;
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Parameters {
     #[serde(default)]
     pub check_probability: f32,
@@ -43,12 +43,10 @@ impl Checker {
 
     fn check_duration(&self, _pick_ticket: &ItemPicks, contents: &ItemPicks) -> SimulationTime {
         let p: f32 = rand::thread_rng().gen();
-        println!("{}", p);
         if p > self.parameters.check_probability {
             0.0
         } else {
             let item_count = contents.len();
-            println!("{}", item_count);
             let pick_count: PickQuantity = contents.iter().map(|(_k, &v)| v).sum();
 
             self.parameters.seconds_per_pick_ticket

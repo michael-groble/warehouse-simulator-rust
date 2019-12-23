@@ -3,20 +3,25 @@
     {
       "type": "Picker",
       "parameters": {
-        "pickable_items": ["A", "B"]
+        "pickable_items": ["A", "B"],
+        "seconds_per_pick_ticket": 1.0,
+        "seconds_per_item": 1.0
       }
     },
     {
       "type": "Picker",
       "parameters": {
-        "pickable_items": ["C", "D"]
+        "pickable_items": ["C", "D"],
+        "seconds_per_pick_ticket": 1.0,
+        "seconds_per_item": 1.0
       }
     },
     {
       "type": "Checker",
       "parameters": {
         "check_probability": 0.25,
-        "seconds_per_pick_ticket": 2.0
+        "seconds_per_pick_ticket": 2.0,
+        "seconds_per_item": 1.0
       }
     }
   ]
