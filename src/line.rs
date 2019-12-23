@@ -7,6 +7,7 @@ use std::cell::RefCell;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, ErrorKind};
+use std::path::PathBuf;
 use std::rc::Rc;
 
 pub struct Line {
@@ -78,7 +79,8 @@ impl Line {
     ///  # use warehouse_simulator::*;
     ///  # use warehouse_simulator::line::Parameter;
     ///  # use std::collections::HashSet;
-    ///  let line_parameters = Line::parameters_from_file("tests/fixtures/simple_line.json").unwrap();
+    ///  # use std::path::PathBuf;
+    ///  let line_parameters = Line::parameters_from_file(PathBuf::from("tests/fixtures/simple_line.json")).unwrap();
     ///  assert_eq!(line_parameters.members.len(), 3);
     ///
     ///  match &line_parameters.members[0] {
@@ -86,8 +88,8 @@ impl Line {
     ///         let expected : HashSet<String> = vec!["A".to_string(), "B".to_string()].into_iter().collect();
     ///         let diff : HashSet<_> = parameters.pickable_items.symmetric_difference(&expected).collect();
     ///         assert_eq!(diff.is_empty(), true);
-    ///         assert_eq!(parameters.seconds_per_pick_ticket, 0.0);
-    ///         assert_eq!(parameters.seconds_per_item, 0.0);
+    ///         assert_eq!(parameters.seconds_per_pick_ticket, 1.0);
+    ///         assert_eq!(parameters.seconds_per_item, 1.0);
     ///         assert_eq!(parameters.seconds_per_quantity, 0.0);
     ///     }
     ///     _ => { panic!("member is not expected type")}
@@ -97,8 +99,8 @@ impl Line {
     ///         let expected : HashSet<String> = vec!["C".to_string(), "D".to_string()].into_iter().collect();
     ///         let diff : HashSet<_> = parameters.pickable_items.symmetric_difference(&expected).collect();
     ///         assert_eq!(diff.is_empty(), true);
-    ///         assert_eq!(parameters.seconds_per_pick_ticket, 0.0);
-    ///         assert_eq!(parameters.seconds_per_item, 0.0);
+    ///         assert_eq!(parameters.seconds_per_pick_ticket, 1.0);
+    ///         assert_eq!(parameters.seconds_per_item, 1.0);
     ///         assert_eq!(parameters.seconds_per_quantity, 0.0);
     ///     }
     ///     _ => { panic!("member is not expected type")}
@@ -107,13 +109,13 @@ impl Line {
     ///     Parameter::Checker(parameters) => {
     ///         assert_eq!(parameters.check_probability, 0.25);
     ///         assert_eq!(parameters.seconds_per_pick_ticket, 2.0);
-    ///         assert_eq!(parameters.seconds_per_item, 0.0);
+    ///         assert_eq!(parameters.seconds_per_item, 1.0);
     ///         assert_eq!(parameters.seconds_per_quantity, 0.0);
     ///     }
     ///     _ => { panic!("member is not expected type")}
     /// }
     /// ```
-    pub fn parameters_from_file(filename: &str) -> io::Result<Parameters> {
+    pub fn parameters_from_file(filename: PathBuf) -> io::Result<Parameters> {
         let file = File::open(filename)?;
         let reader = BufReader::new(file);
         let v: Value = serde_json::from_reader(reader)?;
